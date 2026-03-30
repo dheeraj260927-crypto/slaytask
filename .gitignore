@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+tasks.json
+.env
+*.exe
+*.msi
+*.twbr
+desktop.ini

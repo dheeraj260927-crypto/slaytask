@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskSlay — Daily Task Manager</title>
+    <meta name="description" content="TaskSlay: A stunning daily task manager to crush your goals.">
+    <meta name="theme-color" content="#7c5cff">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" href="/static/icon-192.png">
+    <link rel="apple-touch-icon" href="/static/icon-192.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+        :root {
+            --bg: #07070d; --bg2: #0e0e18; --bg3: #14142a;
+            --glass: rgba(255,255,255,0.04); --glass2: rgba(255,255,255,0.07);
+            --border: rgba(255,255,255,0.07); --border-h: rgba(255,255,255,0.14);
+            --txt: #ededf4; --txt2: #7e7e95; --txt3: #44445e;
+            --accent: #7c5cff; --accent-g: rgba(124,92,255,0.25); --accent-s: rgba(124,92,255,0.12);
+            --green: #34d399; --green-s: rgba(52,211,153,0.12);
+            --yellow: #fbbf24; --yellow-s: rgba(251,191,36,0.12);
+            --red: #f87171; --red-s: rgba(248,113,113,0.12);
+            --blue: #60a5fa; --blue-s: rgba(96,165,250,0.12);
+            --pink: #f472b6; --pink-s: rgba(244,114,182,0.12);
+            --r: 14px; --rs: 10px; --rxs: 6px;
+            --t: all .3s cubic-bezier(.4,0,.2,1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif; background: var(--bg);
+            color: var(--txt); min-height: 100vh; overflow-x: hidden;
+        }
+
+        body::before {
+            content:''; position:fixed; inset:-50%; width:200%; height:200%;
+            background: radial-gradient(ellipse at 25% 40%, rgba(124,92,255,.07) 0%, transparent 55%),
+                        radial-gradient(ellipse at 75% 25%, rgba(96,165,250,.05) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 85%, rgba(52,211,153,.03) 0%, transparent 50%);
+            z-index:0; animation: drift 25s ease-in-out infinite alternate;
+        }
+        @keyframes drift { to { transform: translate(-2%,-1%) rotate(1.5deg); } }
+
+        .app { position:relative; z-index:1; max-width:880px; margin:0 auto; padding:20px 18px 100px; }
+
+        /* HEADER */
+        .hdr { text-align:center; padding:36px 0 28px; }
+        .hdr h1 {
+            font-size:2.6rem; font-weight:900; letter-spacing:-2px;
+            background: linear-gradient(135deg,#fff,#7c5cff,#60a5fa,#34d399);
+            background-size:300% 300%; -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+            animation: grad 6s ease infinite;
+        }
+        @keyframes grad { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .hdr p { color:var(--txt2); font-size:.92rem; margin-top:6px; }
+
+        /* DATE NAV */
+        .dnav { display:flex; align-items:center; justify-content:center; gap:14px; margin:20px 0 26px; }
+        .dnav button {
+            background:var(--glass); border:1px solid var(--border); color:var(--txt);
+            width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:1rem;
+            display:flex; align-items:center; justify-content:center; transition:var(--t);
+        }
+        .dnav button:hover { background:var(--accent-s); border-color:var(--accent); transform:scale(1.08); }
+        .ddisp {
+            background:var(--glass); border:1px solid var(--border); border-radius:var(--rs);
+            padding:10px 22px; text-align:center; min-width:210px; cursor:pointer; transition:var(--t);
+        }
+        .ddisp:hover { border-color:var(--accent); }
+        .ddisp .dn { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:2px; color:var(--accent); }
+        .ddisp .dt { font-size:1rem; font-weight:500; margin-top:2px; }
+        .dhi { position:absolute; opacity:0; pointer-events:none; }
+
+        /* STATS + PROGRESS */
+        .top-row { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:12px; margin-bottom:24px; align-items:stretch; }
+        .scard {
+            background:var(--glass); border:1px solid var(--border); border-radius:var(--rs);
+            padding:16px; text-align:center; transition:var(--t);
+        }
+        .scard:hover { border-color:var(--border-h); transform:translateY(-2px); }
+        .snum { font-size:1.5rem; font-weight:700; }
+        .slab { font-size:.68rem; text-transform:uppercase; letter-spacing:1.2px; color:var(--txt2); margin-top:3px; }
+        .scard:nth-child(1) .snum { color:var(--accent); }
+        .scard:nth-child(2) .snum { color:var(--green); }
+        .scard:nth-child(3) .snum { color:var(--yellow); }
+
+        .prog-wrap {
+            background:var(--glass); border:1px solid var(--border); border-radius:var(--rs);
+            padding:14px 18px; display:flex; align-items:center; gap:12px; transition:var(--t);
+        }
+        .prog-wrap:hover { border-color:var(--border-h); }
+        .ring-box { position:relative; width:52px; height:52px; flex-shrink:0; }
+        .ring-box svg { transform:rotate(-90deg); }
+        .ring-bg { fill:none; stroke:var(--border); stroke-width:5; }
+        .ring-fg { fill:none; stroke:var(--accent); stroke-width:5; stroke-linecap:round; transition: stroke-dashoffset .8s cubic-bezier(.4,0,.2,1); }
+        .ring-pct {
+            position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+            font-size:.72rem; font-weight:700; color:var(--accent);
+        }
+        .prog-label { font-size:.68rem; text-transform:uppercase; letter-spacing:1px; color:var(--txt2); }
+
+        /* FILTER TABS */
+        .filters { display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
+        .ftab {
+            background:var(--glass); border:1px solid var(--border); border-radius:20px;
+            padding:6px 16px; font-size:.75rem; font-weight:600; color:var(--txt2);
+            cursor:pointer; transition:var(--t); font-family:'Inter',sans-serif;
+            text-transform:capitalize;
+        }
+        .ftab:hover { border-color:var(--border-h); color:var(--txt); }
+        .ftab.active { background:var(--accent-s); border-color:var(--accent); color:var(--accent); }
+
+        /* ADD FORM */
+        .aform {
+            background:var(--glass); border:1px solid var(--border); border-radius:var(--r);
+            padding:22px; margin-bottom:24px; backdrop-filter:blur(16px); transition:var(--t);
+        }
+        .aform:focus-within { border-color:var(--accent); box-shadow:0 0 30px var(--accent-g); }
+        .fhdr { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+        .fhdr h2 { font-size:1.05rem; font-weight:600; }
+        .fhdr .ic { font-size:1.2rem; }
+        .frow { display:grid; gap:10px; margin-bottom:10px; }
+        .frow.c2 { grid-template-columns:1fr 1fr; }
+        .frow.c3 { grid-template-columns:1fr 1fr 1fr; }
+        .fg label { display:block; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--txt2); margin-bottom:5px; }
+        .fg input, .fg select, .fg textarea {
+            width:100%; background:rgba(255,255,255,.03); border:1px solid var(--border);
+            border-radius:var(--rxs); padding:9px 12px; color:var(--txt);
+            font-family:'Inter',sans-serif; font-size:.85rem; outline:none; transition:var(--t);
+        }
+        .fg input:focus, .fg select:focus, .fg textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-s); }
+        .fg select { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237e7e95' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
+        .fg select option { background:var(--bg2); color:var(--txt); }
+        .fg textarea { resize:vertical; min-height:50px; }
+        .btn-add {
+            width:100%; background:linear-gradient(135deg,#7c5cff,#5b3fd4); border:none;
+            color:#fff; padding:12px; border-radius:var(--rxs); font-family:'Inter',sans-serif;
+            font-size:.9rem; font-weight:600; cursor:pointer; transition:var(--t); margin-top:4px;
+        }
+        .btn-add:hover { transform:translateY(-2px); box-shadow:0 6px 24px var(--accent-g); }
+        .btn-add:active { transform:translateY(0); }
+
+        /* TASK LIST */
+        .tsec h2 { font-size:.9rem; font-weight:600; color:var(--txt2); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+        .badge { background:var(--accent-s); color:var(--accent); font-size:.72rem; padding:2px 10px; border-radius:20px; font-weight:700; }
+        .tlist { display:flex; flex-direction:column; gap:8px; }
+
+        /* TASK CARD */
+        .tc {
+            background:var(--glass); border:1px solid var(--border); border-radius:var(--rs);
+            padding:14px 16px; display:flex; align-items:flex-start; gap:12px;
+            transition:var(--t); animation:slideUp .35s cubic-bezier(.4,0,.2,1) both;
+            position:relative; overflow:hidden;
+        }
+        .tc::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; border-radius:3px; transition:var(--t); }
+        .tc.p-high::before { background:var(--red); }
+        .tc.p-medium::before { background:var(--yellow); }
+        .tc.p-low::before { background:var(--green); }
+        .tc:hover { background:var(--glass2); border-color:var(--border-h); transform:translateX(3px); }
+        .tc.done { opacity:.45; }
+        .tc.done .tn { text-decoration:line-through; color:var(--txt3); }
+        @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        .tcb input { display:none; }
+        .tcb { flex-shrink:0; margin-top:2px; }
+        .tcb label {
+            width:20px; height:20px; border:2px solid var(--border-h); border-radius:6px;
+            display:flex; align-items:center; justify-content:center; cursor:pointer;
+            transition:var(--t); font-size:.65rem; color:transparent;
+        }
+        .tcb label:hover { border-color:var(--accent); background:var(--accent-s); }
+        .tcb input:checked+label { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+        .tbody { flex:1; min-width:0; }
+        .tn { font-size:.9rem; font-weight:500; margin-bottom:3px; transition:var(--t); }
+        .td { font-size:.78rem; color:var(--txt2); margin-bottom:6px; line-height:1.4; }
+        .tm { display:flex; flex-wrap:wrap; gap:6px; }
+        .tag { font-size:.65rem; font-weight:700; padding:2px 9px; border-radius:16px; text-transform:uppercase; letter-spacing:.5px; }
+        .tag-h { background:var(--red-s); color:var(--red); }
+        .tag-m { background:var(--yellow-s); color:var(--yellow); }
+        .tag-l { background:var(--green-s); color:var(--green); }
+        .tag-c { background:var(--blue-s); color:var(--blue); }
+        .tag-t { background:var(--accent-s); color:var(--accent); }
+
+        .tact { flex-shrink:0; display:flex; gap:5px; opacity:0; transition:var(--t); }
+        .tc:hover .tact { opacity:1; }
+        .bic {
+            background:rgba(255,255,255,.04); border:1px solid transparent; color:var(--txt2);
+            width:30px; height:30px; border-radius:7px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; font-size:.8rem; transition:var(--t);
+        }
+        .bic:hover { background:var(--red-s); color:var(--red); border-color:rgba(248,113,113,.25); }
+
+        /* EMPTY */
+        .empty { text-align:center; padding:50px 20px; color:var(--txt3); }
+        .empty .ei { font-size:3rem; margin-bottom:12px; opacity:.5; }
+        .empty h3 { font-size:1rem; font-weight:600; color:var(--txt2); margin-bottom:6px; }
+        .empty p { font-size:.82rem; }
+
+        /* TOAST */
+        .toasts { position:fixed; bottom:20px; right:20px; z-index:1000; display:flex; flex-direction:column; gap:8px; }
+        .toast {
+            background:var(--bg2); border:1px solid var(--border); border-radius:var(--rs);
+            padding:12px 18px; color:var(--txt); font-size:.84rem; font-weight:500;
+            box-shadow:0 8px 32px rgba(0,0,0,.4); animation:tin .4s cubic-bezier(.4,0,.2,1);
+            backdrop-filter:blur(16px); display:flex; align-items:center; gap:8px;
+        }
+        .toast.success { border-left:3px solid var(--green); }
+        .toast.error { border-left:3px solid var(--red); }
+        @keyframes tin { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+        @keyframes tout { from{opacity:1;transform:translateX(0)} to{opacity:0;transform:translateX(30px)} }
+
+        /* RESPONSIVE */
+        @media(max-width:640px){
+            .hdr h1{font-size:1.9rem}
+            .top-row{grid-template-columns:repeat(3,1fr)}
+            .prog-wrap{grid-column:1/-1}
+            .scard{padding:12px} .snum{font-size:1.2rem}
+            .frow.c2,.frow.c3{grid-template-columns:1fr}
+            .tact{opacity:1} .app{padding:14px 12px 80px}
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <header class="hdr">
+        <h1>⚡ TaskSlay</h1>
+        <p>Crush your daily goals, one task at a time.</p>
+    </header>
+
+    <div class="dnav">
+        <button onclick="changeDate(-1)" title="Previous Day">◀</button>
+        <div class="ddisp" onclick="document.getElementById('dp').showPicker()">
+            <div class="dn" id="dayName">TODAY</div>
+            <div class="dt" id="dateText">March 30, 2026</div>
+            <input type="date" class="dhi" id="dp" onchange="setDate(this.value)">
+        </div>
+        <button onclick="changeDate(1)" title="Next Day">▶</button>
+    </div>
+
+    <div class="top-row">
+        <div class="scard"><div class="snum" id="totalC">0</div><div class="slab">Total</div></div>
+        <div class="scard"><div class="snum" id="doneC">0</div><div class="slab">Done</div></div>
+        <div class="scard"><div class="snum" id="pendC">0</div><div class="slab">Pending</div></div>
+        <div class="prog-wrap">
+            <div class="ring-box">
+                <svg width="52" height="52" viewBox="0 0 52 52">
+                    <circle class="ring-bg" cx="26" cy="26" r="22"/>
+                    <circle class="ring-fg" id="ringFg" cx="26" cy="26" r="22"
+                        stroke-dasharray="138.23" stroke-dashoffset="138.23"/>
+                </svg>
+                <div class="ring-pct" id="ringPct">0%</div>
+            </div>
+            <div class="prog-label">Progress</div>
+        </div>
+    </div>
+
+    <div class="filters" id="filters">
+        <button class="ftab active" data-cat="all" onclick="setFilter('all',this)">All</button>
+        <button class="ftab" data-cat="work" onclick="setFilter('work',this)">Work</button>
+        <button class="ftab" data-cat="personal" onclick="setFilter('personal',this)">Personal</button>
+        <button class="ftab" data-cat="health" onclick="setFilter('health',this)">Health</button>
+        <button class="ftab" data-cat="study" onclick="setFilter('study',this)">Study</button>
+        <button class="ftab" data-cat="shopping" onclick="setFilter('shopping',this)">Shopping</button>
+    </div>
+
+    <div class="aform">
+        <div class="fhdr"><span class="ic">✦</span><h2>Add New Task</h2></div>
+        <form id="addForm" onsubmit="addTask(event)">
+            <div class="frow"><div class="fg"><label>Task Name</label><input type="text" id="tName" placeholder="What needs to be done?" required></div></div>
+            <div class="frow"><div class="fg"><label>Description</label><textarea id="tDesc" placeholder="Add details..." rows="2"></textarea></div></div>
+            <div class="frow c3">
+                <div class="fg"><label>Reminder</label><input type="time" id="tTime"></div>
+                <div class="fg"><label>Priority</label>
+                    <select id="tPri"><option value="low">🟢 Low</option><option value="medium" selected>🟡 Medium</option><option value="high">🔴 High</option></select>
+                </div>
+                <div class="fg"><label>Category</label>
+                    <select id="tCat"><option value="general">General</option><option value="work">Work</option><option value="personal">Personal</option><option value="health">Health</option><option value="study">Study</option><option value="shopping">Shopping</option></select>
+                </div>
+            </div>
+            <button type="submit" class="btn-add">⚡ Add Task</button>
+        </form>
+    </div>
+
+    <div class="tsec">
+        <h2>📋 Tasks <span class="badge" id="tBadge">0</span></h2>
+        <div class="tlist" id="tList"></div>
+    </div>
+</div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+const API='/api/tasks';
+let curDate=new Date(), tasks=[], filter='all';
+
+function fmt(d){return d.toISOString().split('T')[0]}
+
+function updDate(){
+    const days=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+    const mons=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('dayName').textContent=days[curDate.getDay()];
+    document.getElementById('dateText').textContent=`${mons[curDate.getMonth()]} ${curDate.getDate()}, ${curDate.getFullYear()}`;
+    document.getElementById('dp').value=fmt(curDate);
+    const t=new Date();t.setHours(0,0,0,0);const s=new Date(curDate);s.setHours(0,0,0,0);
+    if(s.getTime()===t.getTime()) document.getElementById('dayName').textContent='TODAY';
+}
+
+function changeDate(d){curDate.setDate(curDate.getDate()+d);updDate();fetchTasks()}
+function setDate(v){curDate=new Date(v+'T00:00:00');updDate();fetchTasks()}
+function setFilter(c,el){filter=c;document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderTasks()}
+
+async function fetchTasks(){
+    try{const r=await fetch(`${API}?date=${fmt(curDate)}`);tasks=await r.json();renderTasks();updStats()}
+    catch(e){console.error(e);toast('Failed to load tasks','error')}
+}
+
+async function addTask(e){
+    e.preventDefault();
+    const name=document.getElementById('tName').value.trim();
+    if(!name)return;
+    const body={name,description:document.getElementById('tDesc').value.trim(),
+        time:document.getElementById('tTime').value||'',
+        priority:document.getElementById('tPri').value,
+        category:document.getElementById('tCat').value,
+        date:fmt(curDate)};
+    try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if(r.ok){toast('Task added!','success');document.getElementById('addForm').reset();document.getElementById('tPri').value='medium';fetchTasks()}
+        else toast('Failed to add','error')}
+    catch(e){toast('Network error','error')}
+}
+
+async function toggleTask(id){try{await fetch(`${API}/${id}/toggle`,{method:'PATCH'});fetchTasks()}catch(e){console.error(e)}}
+async function deleteTask(id){try{const r=await fetch(`${API}/${id}`,{method:'DELETE'});if(r.ok){toast('Task deleted','success');fetchTasks()}}catch(e){toast('Delete failed','error')}}
+
+function renderTasks(){
+    const list=document.getElementById('tList');
+    let vis=filter==='all'?tasks:tasks.filter(t=>(t.category||'general')===filter);
+    document.getElementById('tBadge').textContent=vis.length;
+    if(!vis.length){list.innerHTML=`<div class="empty"><div class="ei">📭</div><h3>No tasks here</h3><p>${filter!=='all'?'Try a different category or ':''}Add a task above!</p></div>`;return}
+    const po={high:0,medium:1,low:2};
+    vis=[...vis].sort((a,b)=>{if(a.completed!==b.completed)return a.completed?1:-1;return(po[a.priority]||1)-(po[b.priority]||1)});
+    list.innerHTML=vis.map((t,i)=>`
+        <div class="tc ${t.completed?'done':''} p-${t.priority}" style="animation-delay:${i*.04}s">
+            <div class="tcb"><input type="checkbox" id="c-${t.id}" ${t.completed?'checked':''} onchange="toggleTask('${t.id}')"><label for="c-${t.id}">✓</label></div>
+            <div class="tbody">
+                <div class="tn">${esc(t.name)}</div>
+                ${t.description?`<div class="td">${esc(t.description)}</div>`:''}
+                <div class="tm">
+                    <span class="tag tag-${t.priority[0]}">${t.priority}</span>
+                    <span class="tag tag-c">${t.category||'general'}</span>
+                    ${t.time?`<span class="tag tag-t">⏰ ${t.time}</span>`:''}
+                </div>
+            </div>
+            <div class="tact"><button class="bic" onclick="deleteTask('${t.id}')" title="Delete">🗑</button></div>
+        </div>`).join('');
+}
+
+function updStats(){
+    const total=tasks.length,done=tasks.filter(t=>t.completed).length,pend=total-done;
+    anim('totalC',total);anim('doneC',done);anim('pendC',pend);
+    const pct=total?Math.round(done/total*100):0;
+    const circ=138.23;
+    document.getElementById('ringFg').style.strokeDashoffset=circ-(circ*pct/100);
+    document.getElementById('ringPct').textContent=pct+'%';
+}
+
+function anim(id,tgt){
+    const el=document.getElementById(id);const cur=parseInt(el.textContent)||0;if(cur===tgt)return;
+    const s=performance.now();
+    (function u(n){const p=Math.min((n-s)/400,1);el.textContent=Math.round(cur+(tgt-cur)*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(u)})(s);
+    requestAnimationFrame(function u(n){const p=Math.min((n-s)/400,1);el.textContent=Math.round(cur+(tgt-cur)*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(u)});
+}
+
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
+
+function toast(msg,type='success'){
+    const c=document.getElementById('toasts'),t=document.createElement('div');
+    t.className=`toast ${type}`;t.innerHTML=`${type==='success'?'✅':'❌'} ${msg}`;c.appendChild(t);
+    setTimeout(()=>{t.style.animation='tout .3s ease forwards';setTimeout(()=>t.remove(),300)},2500);
+}
+
+updDate();fetchTasks();
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/static/sw.js')}
+</script>
+</body>
+</html>
