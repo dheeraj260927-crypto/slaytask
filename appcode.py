@@ -6,8 +6,14 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.base import JobLookupError
 import atexit
-from plyer import notification
 import uuid
+
+# plyer only works on desktop (Windows/macOS/Linux with GUI)
+try:
+    from plyer import notification
+    NOTIFICATIONS_ENABLED = True
+except Exception:
+    NOTIFICATIONS_ENABLED = False
 
 app = Flask(__name__)
 CORS(app)
@@ -37,7 +43,10 @@ def save_tasks(tasks):
         json.dump(tasks, f, indent=4)
 
 def send_notification(title, message):
-    """Send desktop notification to user"""
+    """Send desktop notification to user (only on desktop environments)"""
+    if not NOTIFICATIONS_ENABLED:
+        print(f"[Reminder] {title}: {message}")
+        return
     try:
         notification.notify(
             title=title,
@@ -188,6 +197,7 @@ if __name__ == '__main__':
     if not os.path.exists(TASKS_FILE):
         save_tasks([])
 
+    port = int(os.environ.get('PORT', 5000))
     print("TaskSlay Daily Task Manager is running!")
-    print("API available at http://localhost:5000/api/tasks")
-    app.run(debug=True, port=5000)
+    print(f"API available at http://localhost:{port}/api/tasks")
+    app.run(debug=False, host='0.0.0.0', port=port)
