@@ -5,4 +5,9 @@ tasks.json
 *.exe
 *.msi
 *.twbr
+*.pdf
 desktop.ini
+tunnel_log.txt
+url.txt
+gpt.py
+python.py
