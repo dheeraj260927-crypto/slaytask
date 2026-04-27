@@ -58,6 +58,8 @@ def add_task():
 @app.route('/api/tasks/<task_id>', methods=['PUT'])
 def update_task(task_id):
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
     tasks = load_tasks()
     for i, task in enumerate(tasks):
         if task['id'] == task_id:
@@ -94,5 +96,8 @@ def toggle_task(task_id):
     return jsonify({'error': 'Task not found'}), 404
 
 if __name__ == '__main__':
+    # Ensure tasks file exists on first run
+    if not os.path.exists(TASKS_FILE):
+        save_tasks([])
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)

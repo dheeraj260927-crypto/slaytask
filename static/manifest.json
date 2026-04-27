@@ -1,22 +1,27 @@
 {
+    "id": "/",
     "name": "TaskSlay — Daily Task Manager",
     "short_name": "TaskSlay",
     "description": "Crush your daily goals, one task at a time.",
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#07070d",
     "theme_color": "#7c5cff",
-    "orientation": "portrait",
+    "orientation": "portrait-primary",
+    "categories": ["productivity", "utilities"],
     "icons": [
         {
             "src": "/static/icon-192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "/static/icon-512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         }
     ]
 }
